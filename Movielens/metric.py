@@ -87,7 +87,7 @@ class ValidateItems:
         ndcg_sum_5, ndcg_sum_10, ndcg_sum_20 = 0.0, 0.0, 0.0
         max_k = 20
 
-        for it in tqdm(self.item):
+        for it in self.item:
             # output
             model = model.to(device)  # move to cpu
             genre = torch.tensor(self.onehot_features[it])
@@ -145,7 +145,7 @@ class ValidateUsers:
         max_k = 20
         all_ratings = np.zeros((self.n_users, self.n_items))
 
-        for it in tqdm(self.items_id.keys()):
+        for it in self.items_id.keys():
             # output
             model = model.to(device)  # move to cpu
             genre = torch.tensor(self.onehot_features[it])
