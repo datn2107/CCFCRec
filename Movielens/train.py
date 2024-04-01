@@ -24,12 +24,13 @@ if __name__ == "__main__":
     val_path = os.path.join(args.data_path, "val_cold_interactions.npy")
 
     # negative user id
-    train_data = np.load(train_path, allow_pickle=True).item()
+    train_data = np.load(train_path)
+    val_path = np.load(val_path)
 
-    cold_items = np.load(os.path.join(args.data_path, "cold_items.npy"), allow_pickle=True).items()
-    warm_items = np.load(os.path.join(args.data_path, "warm_items.npy"), allow_pickle=True).items()
-    img_features = np.load(os.path.join(args.data_path, "v_feature.npy"))
-    movies_onehot = np.load(os.path.join(args.data_path, "onehot_feature.npy"))
+    cold_items = np.load(os.path.join(args.data_path, "cold_items.npy"), allow_pickle=True).item()
+    warm_items = np.load(os.path.join(args.data_path, "warm_items.npy"), allow_pickle=True).item()
+    img_features = np.load(os.path.join(args.data_path, "v_features.npy"))
+    movies_onehot = np.load(os.path.join(args.data_path, "onehot_features.npy"))
 
     positive_items_for_user, negative_items_for_user = load_postive_negative_items_each_user(train_data, warm_items)
 
@@ -58,10 +59,9 @@ if __name__ == "__main__":
         myModel.parameters(), lr=args.learning_rate, weight_decay=0.1
     )
     validator = Validate(
-        validate_csv=val_path,
-        user_serialize_dict=user_serialize_dict,
-        img=img_feature,
-        genres=movies_onehot,
+        val_path,
+        img_features,
+        movies_onehot
     )
 
     train(myModel, train_loader, optimizer, validator, args)
