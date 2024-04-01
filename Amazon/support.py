@@ -120,7 +120,7 @@ class RatingDataset(torch.utils.data.Dataset):
         self.category_num = category_num
         self.user_item_interaction_dict = build_user_item_interaction_dict()
         self.item_user_interaction_dict = build_item_user_interaction_dict()
-        print("整个数据集的user个数为:", self.user_number, "train_set中的用户数目为:", len(set(self.user)))
+        print("The number of users in the entire data set is:", self.user_number, "The number of users in train_set is:", len(set(self.user)))
 
     def __len__(self):
         return len(self.train_csv)
@@ -128,13 +128,13 @@ class RatingDataset(torch.utils.data.Dataset):
     def __getitem__(self, index):
         user = self.user[index]
         item = self.item[index]
-        # 处理 item genres
+        # process item genres
         genres = torch.full((self.category_num, 1), -1)
         genres_index = self.genres_dict.get(item)
         genres = genres.to(device)
         genres[genres_index] = 1
         genres = genres.squeeze(dim=1)
-        # 处理 item feature
+        # process item feature
         img_feature = self.img_feature_dict.get(item)
         get_item_start = time.time()
         # sample neg user spend a lot time.
@@ -142,10 +142,10 @@ class RatingDataset(torch.utils.data.Dataset):
         # neg_user = sample_negative_user(self.user, interaction_user_set)
         neg_user = self.neg_user[index]
         # print('sample neg user:', time.time()-get_item_start)
-        # --------------------- #
-        #  处理 positive items   #
-        #  runtime sampling     #
-        # --------------------- #
+        # ------------------------ #
+        #  process positive items  #
+        #  runtime sampling        #
+        # ------------------------ #
         positive_items_ = self.user_item_interaction_dict.get(user)
         positive_items = list(np.random.choice(list(positive_items_), self.positive_number, replace=True))
         positive_items_list = [self.item_serialize_dict.get(item) for item in positive_items]
@@ -165,8 +165,9 @@ class RatingDataset(torch.utils.data.Dataset):
         user = self.user_serialize_dict.get(user)
         item = self.item_serialize_dict.get(item)
         neg_user = self.user_serialize_dict.get(neg_user)
-        return torch.tensor(user), torch.tensor(item), genres, torch.tensor(img_feature), torch.tensor(neg_user),\
-               torch.tensor(positive_items_list), torch.tensor(negative_item_list), torch.tensor(self_neg_list)
+        return torch.tensor(user), torch.tensor(item), genres, torch.tensor(img_feature), \
+               torch.tensor(neg_user), torch.tensor(positive_items_list), torch.tensor(negative_item_list), \
+               torch.tensor(self_neg_list)
 
 
 # 测试数据封装
