@@ -12,77 +12,21 @@ import torch
 from tqdm import tqdm
 
 
-# Return dict， userId: [positive_sample(list), negative_sample(list(list))]
-def read_user_positive_negative_movies(user_positive_movie_csv, refresh=False):
-    pkl_name = 'pkl/user_pn_dict.pkl'
-    if os.path.exists("pkl") is False:
-        os.makedirs("pkl")
-    if (os.path.exists(pkl_name) is True) and (refresh is False):
-        pkl_file = open(pkl_name, 'rb')
-        data = pickle.load(pkl_file)
-        return data['user_pn_dict']
-    user_position_dict = {}
-    last_user = -1
-    user_position_dict[last_user] = [-1, -1]
-    for index, row in tqdm(user_positive_movie_csv.iterrows()):
-        u = row['userId']
-        if u != last_user:
-            user_position_dict[u] = [index, index]
-            user_position_dict[last_user] = [user_position_dict.get(last_user)[0], index-1]
-            last_user = u
-    # update last item
-    user_position_dict[last_user] = [user_position_dict.get(last_user)[0], user_positive_movie_csv.__len__()-1]
-    with open(pkl_name, 'wb') as file:
-        pickle.dump({'user_pn_dict': user_position_dict}, file)
-    return user_position_dict
+def load_postive_negative_items_each_user(train_data, warm_items):
+    positive_items_for_user = {}
+    for data in train_data:
+        if data[0] not in positive_items_for_user:
+            positive_items_for_user[data[0]] = []
+        positive_items_for_user[data[0]].append(data[1])
+
+    negative_items_for_user = {}
+    for user in positive_items_for_user:
+        negative_items_for_user[user] = list(warm_items - set(positive_items_for_user[user]))
+
+    return positive_items_for_user, negative_items_for_user
 
 
-def read_img_feature(img_feature_csv):
-    df = pd.read_csv(img_feature_csv, dtype={'feature': object, 'movie_id': int})
-    img_feature_dict = {}
-    for index, row in df.iterrows():
-        item = row['movie_id']
-        feature = list(map(float, row['feature'][1:-1].split(",")))
-        img_feature_dict[item] = feature
-    return img_feature_dict
-
-
-def read_genres(genres_csv):
-    df = pd.read_csv(genres_csv, dtype={'movieId': int})
-    genres_dict = {}
-    for index, row in df.iterrows():
-        item = row['movieId']
-        genres = list(map(int, row['genres_onehot'][1:-1].split(',')))
-        genres_dict[item] = genres
-    return genres_dict
-
-
-def serialize_user(user_set):
-    user_set = set(user_set)
-    user_idx = 0
-    # key: user original id，value: user ordered id
-    user_serialize_dict = {}
-    for user in user_set:
-        user_serialize_dict[user] = user_idx
-        user_idx += 1
-    return user_serialize_dict
-
-
-# 输入user和item的set，输出user和item从1到n有序的字典
-def serialize_item(item_set):
-    item_set = set(item_set)
-    item_idx = 0
-    item_serialize_dict = {}
-    for item in item_set:
-        item_serialize_dict[item] = item_idx
-        item_idx += 1
-    return item_serialize_dict
-
-
-# def
-
-
-class RatingDataset(torch.utils.data.Dataset):
+class RatingDataset(Dataset):
     def __init__(self, train_data, img_features, movies_onehot, positive_items_for_user, negative_items_for_user,
                  n_users, n_items, n_positive, n_negative):
         self.train_data = train_data

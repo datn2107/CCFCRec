@@ -15,20 +15,26 @@ def get_similar_user_speed(model, genres, img, k):
     user_embedding = model.user_embedding
     user_idx = torch.tensor(list(range(user_embedding.shape[0])))
     user_idx = user_idx.to(device)
+
     # [138493*64]
     user_emb = user_embedding[user_idx]
     genres = genres.unsqueeze(dim=0)
     img = img.unsqueeze(dim=0)
-    # 输入到模型中
+
+    # input into the model
     attr_present = model.attr_matrix(genres)
     attr_tmp1 = model.h(torch.matmul(attr_present, model.attr_W1.T) + model.attr_b1)
     attr_attention_b = model.softmax(torch.matmul(attr_tmp1, model.attr_W2))
-    z_v = torch.matmul(attr_attention_b.transpose(1, 2), attr_present).squeeze()  # z_v是属性经过注意力加权融合后的向量
-    p_v = torch.matmul(img, model.image_projection)  # item的图像嵌入向量
+
+    # z_v is the vector of attributes after attention-weighted fusion.
+    z_v = torch.matmul(attr_attention_b.transpose(1, 2), attr_present).squeeze()
+    # Image embedding vector of item
+    p_v = torch.matmul(img, model.image_projection)
     q_v_a = torch.cat((z_v.unsqueeze(dim=0), p_v), dim=1)
     q_v_c = model.gen_layer2(model.h(model.gen_layer1(q_v_a)))
     ratings = torch.mul(user_emb, q_v_c).sum(dim=1)
     index = torch.argsort(-ratings)
+
     return index[0:k].cpu().detach().numpy().tolist()
 
 
@@ -63,18 +69,17 @@ def ndcg_k(item, recommend_users, item_user_dict, k):
 
 
 class Validate:
-    def __init__(self, validate_csv, user_serialize_dict, img, genres):
+    def __init__(self, val_data, img_features, onehot_features):
         print("validate class init")
-        validate_csv = pd.read_csv(validate_csv, dtype={'userId': int, 'movieId': int, 'rating': float})
-        self.item = set(validate_csv['movieId'])
+        self.item = val_data[:, 1]
         self.item_user_dict = {}
-        # 构建完成 item->user dict
-        for it in self.item:
-            users = validate_csv[validate_csv['movieId'] == it]['userId']
-            users = [user_serialize_dict.get(u) for u in users]
-            self.item_user_dict[it] = users
-        self.img_dict = img
-        self.genres_dict = genres
+        for data in val_data:
+            if data[1] not in self.item_user_dict:
+                self.item_user_dict[data[1]] = []
+            self.item_user_dict[data[1]].append(data[0])
+
+        self.img_features = img_features
+        self.onehot_features = onehot_features
 
     def start_validate(self, model):
         # 开始评估
@@ -85,12 +90,12 @@ class Validate:
         for it in self.item:
             # 输出
             model = model.to(device)  # move to cpu
-            genres = torch.tensor(self.genres_dict.get(it))
-            img_feature = torch.tensor(self.img_dict.get(it))
-            genres = genres.to(device)
+            genre = torch.tensor(self.onehot_features[it])
+            img_feature = torch.tensor(self.img_features[it])
+            genre = genre.to(device)
             img_feature = img_feature.to(device)
             with torch.no_grad():
-                recommend_users = get_similar_user_speed(model, genres, img_feature, max_k)
+                recommend_users = get_similar_user_speed(model, genre, img_feature, max_k)
             # 计算hr指标
             # 计算p@k指标
             hr_hit_cnt_5 += hr_at_k(it, recommend_users, self.item_user_dict, 5)
@@ -115,9 +120,8 @@ class Validate:
 
 
 if __name__ == '__main__':
-    # 参数解析器
-    from Movielens.dataset import read_img_feature, read_genres, serialize_user
     from model import CCFCRec
+
     args = get_args()
     train_df = pd.read_csv("data/train_rating.csv", dtype={'userId': int, 'movieId': int, 'neg_user_id': int})
     total_user_set = train_df['userId']
@@ -127,6 +131,7 @@ if __name__ == '__main__':
     myModel = CCFCRec(args)
     validator = Validate(validate_csv='data/test_rating.csv', user_serialize_dict=user_serialize_dict,
                          img=img_feature, genres=movie_onehot)
+    
     print('---------数据集加载完毕，开始测试----------------')
     test_result_name = 'test_result.csv'
     with open(test_result_name, 'a+') as f:

@@ -22,20 +22,26 @@ torch.cuda.set_device(0)
 class CCFCRec(nn.Module):
     def __init__(self, args):
         super(CCFCRec, self).__init__()
+
         # The last dimension in the attribute embedding table uses 0 as padding. If an attribute of an item is missing, fill it with 0 at the corresponding position. The corresponding index is 18
         self.args = args
         self.attr_matrix = nn.Embedding(args.attr_num + 1, args.attr_present_dim, padding_idx=args.attr_num)
+
         # Define attribute attention layer
         self.attr_W1 = torch.nn.Parameter(torch.FloatTensor(args.attr_present_dim, args.attr_present_dim))
         self.attr_b1 = torch.nn.Parameter(torch.FloatTensor(args.attr_present_dim))
+
         # Control the activation function of the entire model
         self.h = nn.LeakyReLU()
+
         # self.h = nn.ReLU()
         self.attr_W2 = torch.nn.Parameter(torch.FloatTensor(args.attr_present_dim, 1))
         self.softmax = torch.nn.Softmax(dim=0)
+
         # image mapping matrix
         self.image_projection = torch.nn.Parameter(torch.FloatTensor(4096, args.implicit_dim))
         self.sigmoid = torch.nn.Sigmoid()
+
         # The embedding layer of user and item can be initialized with pre-trained ones.
         if args.pretrain is True:
             if args.pretrain_update is True:
@@ -45,12 +51,14 @@ class CCFCRec(nn.Module):
                 self.user_embedding = nn.Parameter(torch.load('user_emb.pt'), requires_grad=False)
                 self.item_embedding = nn.Parameter(torch.load('item_emb.pt'), requires_grad=False)
         else:
-            self.user_embedding = nn.Parameter(torch.FloatTensor(args.user_number, args.implicit_dim))
-            self.item_embedding = nn.Parameter(torch.FloatTensor(args.item_number, args.implicit_dim))
+            self.user_embedding = nn.Parameter(torch.FloatTensor(args.n_users, args.implicit_dim))
+            self.item_embedding = nn.Parameter(torch.FloatTensor(args.n_items, args.implicit_dim))
+
         # Define the generation layer to jointly generate q_v_c from the information of (q_v_a, u),
         # and generate item embeddings containing collaborative information.
         self.gen_layer1 = nn.Linear(args.attr_present_dim*2, args.cat_implicit_dim)
         self.gen_layer2 = nn.Linear(args.attr_present_dim, args.attr_present_dim)
+
         # Parameter initialization
         self.__init_param__()
 
@@ -58,6 +66,7 @@ class CCFCRec(nn.Module):
         nn.init.xavier_normal_(self.attr_W1)
         nn.init.xavier_normal_(self.attr_W2)
         nn.init.xavier_normal_(self.image_projection)
+
         # Generate layer initialization
         # Initialization of user, item embedding layer, initialization without pre-training
         if self.args.pretrain is False:
@@ -78,19 +87,19 @@ class CCFCRec(nn.Module):
         return q_v_c
 
 
-def train(model, train_loader, optimizer, valida, args):
+def train(model, train_loader, optimizer, validator, args):
     print("model start train!")
-    model_save_dir = 'result/' + time.strftime('%Y-%m-%d_%H:%M:%S', time.localtime(time.time()))
-    test_save_path = model_save_dir + "/result.csv"
+    model_save_dir = os.path.join(args.data_path, 'result', 'CCFCRec')
+    test_save_path = os.path.join(model_save_dir, 'test_result.csv')
     os.makedirs(model_save_dir)
 
     print("model train at:", time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
-    # 写入超参数
+    # Write hyperparameters
     with open(model_save_dir + "/readme.txt", 'a+') as f:
         str_ = args_tostring(args)
         f.write(str_)
-        f.write('\nsave dir:'+model_save_dir)
-        f.write('\nmodel train time:'+(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
+        f.write('\nsave dir:' + model_save_dir)
+        f.write('\nmodel train time:' + (time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
 
     with open(test_save_path, 'a+') as f:
         f.write("loss,contrast_loss,self_contrast_loss,p@5,p@10,p@20,ndcg@5,ndcg@10,ndcg@20\n")
@@ -98,9 +107,11 @@ def train(model, train_loader, optimizer, valida, args):
     for i_epoch in range(args.epoch):
         i_batch = 0
         batch_time = time.time()
+
         for user, item, item_genres, item_img_feature, neg_user, positive_item_list, negative_item_list, self_neg_list in tqdm(train_loader):
             optimizer.zero_grad()
             model.train()
+
             # allocate memory cpu to gpu
             model = model.to(device)
             user = user.to(device)
@@ -110,14 +121,17 @@ def train(model, train_loader, optimizer, valida, args):
             neg_user = neg_user.to(device)
             positive_item_list = positive_item_list.to(device)
             negative_item_list = negative_item_list.to(device)
+
             # run model
             q_v_c = model(item_genres, item_img_feature, user)
             q_v_c_unsqueeze = q_v_c.unsqueeze(dim=1)
+
             # Calculate contrast loss
             positive_item_emb = model.item_embedding[positive_item_list]
             pos_contrast_mul = torch.sum(torch.mul(q_v_c_unsqueeze, positive_item_emb), dim=2) / (
                     args.tau * torch.norm(q_v_c_unsqueeze, dim=2) * torch.norm(positive_item_emb, dim=2))
             pos_contrast_exp = torch.exp(pos_contrast_mul)  # shape = 1024*10
+
             # Calculate negative examples
             neg_item_emb = model.item_embedding[negative_item_list]
             q_v_c_un2squeeze = q_v_c_unsqueeze.unsqueeze(dim=1)
@@ -128,6 +142,7 @@ def train(model, train_loader, optimizer, valida, args):
             contrast_val = -torch.log(pos_contrast_exp / (pos_contrast_exp + neg_contrast_sum))  # shape = [1024*10]
             contrast_examples_num = contrast_val.shape[0] * contrast_val.shape[1]
             contrast_sum = torch.sum(torch.sum(contrast_val, dim=1), dim=0) / contrast_val.shape[1]  # 同一个batch求mean
+
             # self contrast
             self_neg_item_emb = model.item_embedding[self_neg_list]
             self_neg_contrast_mul = torch.sum(torch.mul(q_v_c_unsqueeze, self_neg_item_emb), dim=2)/(
@@ -139,6 +154,7 @@ def train(model, train_loader, optimizer, valida, args):
             self_pos_contrast_exp = torch.exp(self_pos_contrast_mul)  # shape = 1024*1
             self_contrast_val = -torch.log(self_pos_contrast_exp/(self_pos_contrast_exp+self_neg_contrast_sum))
             self_contrast_sum = torch.sum(self_contrast_val)
+
             # L_rank z_v & u
             user_emb = model.user_embedding[user]
             item_emb = model.item_embedding[item]
@@ -147,14 +163,17 @@ def train(model, train_loader, optimizer, valida, args):
             y_uv = torch.mul(item_emb, user_emb).sum(dim=1)
             y_kv = torch.mul(item_emb, neg_user_emb).sum(dim=1)
             y_ukv = -logsigmoid(y_uv - y_kv).sum()
+
             # L_rank q_v & u
             y_uv2 = torch.mul(q_v_c, user_emb).sum(dim=1)
             y_kv2 = torch.mul(q_v_c, neg_user_emb).sum(dim=1)
             y_ukv2 = -logsigmoid(y_uv2 - y_kv2).sum()
             total_loss = args.lambda1*(contrast_sum+self_contrast_sum)+(1-args.lambda1)*(y_ukv+y_ukv2)
+
             if math.isnan(total_loss):
                 print("loss is nan!, exit.", total_loss)
                 exit(255)
+
             total_loss.backward()
             optimizer.step()
             i_batch += 1
@@ -162,7 +181,7 @@ def train(model, train_loader, optimizer, valida, args):
                 model.eval()
                 print("[{},/13931603]total_loss:,{},{},s".format(i_batch*1024, total_loss.item(), int(time.time()-batch_time)))
                 with torch.no_grad():
-                    hr_5, hr_10, hr_20, ndcg_5, ndcg_10, ndcg_20 = valida.start_validate(model)
+                    hr_5, hr_10, hr_20, ndcg_5, ndcg_10, ndcg_20 = validator.start_validate(model)
                 with open(test_save_path, 'a+') as f:
                     f.write("{},{},{},{},{},{},{},{},{}\n".format(y_ukv+y_ukv2, contrast_sum, self_contrast_sum,
                                                                   hr_5, hr_10, hr_20, ndcg_5, ndcg_10, ndcg_20))

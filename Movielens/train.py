@@ -4,9 +4,8 @@ import torch
 import pandas as pd
 import numpy as np
 
-from .model import CCFCRec
-from .dataset import RatingDataset
-from .dataset import read_img_feature, read_genres, serialize_user
+from .model import CCFCRec, train
+from .dataset import RatingDataset, load_postive_negative_items_each_user
 from .myargs import get_args, args_tostring
 from .metric import Validate
 
@@ -32,16 +31,7 @@ if __name__ == "__main__":
     img_features = np.load(os.path.join(args.data_path, "v_feature.npy"))
     movies_onehot = np.load(os.path.join(args.data_path, "onehot_feature.npy"))
 
-    positive_items_for_user = {}
-    for data in train_data:
-        if data[0] not in positive_items_for_user:
-            positive_items_for_user[data[0]] = []
-        positive_items_for_user[data[0]].append(data[1])
-
-    negative_items_for_user = {}
-    for user in positive_items_for_user:
-        negative_items_for_user[user] = list(warm_items - set(positive_items_for_user[user]))
-
+    positive_items_for_user, negative_items_for_user = load_postive_negative_items_each_user(train_data, warm_items)
 
     # load dataset
     dataSet = RatingDataset(
@@ -58,10 +48,11 @@ if __name__ == "__main__":
 
     train_loader = torch.utils.data.DataLoader(
         dataSet, batch_size=args.batch_size, shuffle=True, num_workers=0
-    )gi
+    )
     print("Model hyperparameters:", args_tostring(args))
 
-    myModel = CCFCRec(metadata['n_users'], metadata['n_items'], args)
+    args.n_users, args.n_items = metadata['n_users'], metadata['n_items']
+    myModel = CCFCRec(args)
 
     optimizer = torch.optim.Adam(
         myModel.parameters(), lr=args.learning_rate, weight_decay=0.1
