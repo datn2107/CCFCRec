@@ -4,10 +4,10 @@ import torch
 import pandas as pd
 import numpy as np
 
-from .model import CCFCRec, train
-from .dataset import RatingDataset, load_postive_negative_items_each_user
-from .myargs import get_args, args_tostring
-from .metric import Validate
+from model import CCFCRec, train
+from dataset import RatingDataset, load_postive_negative_items_each_user
+from myargs import get_args, args_tostring
+from metric import Validate
 
 
 if __name__ == "__main__":

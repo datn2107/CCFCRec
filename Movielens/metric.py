@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
-from .myargs import get_args
+from myargs import get_args
 
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -131,7 +131,7 @@ if __name__ == '__main__':
     myModel = CCFCRec(args)
     validator = Validate(validate_csv='data/test_rating.csv', user_serialize_dict=user_serialize_dict,
                          img=img_feature, genres=movie_onehot)
-    
+
     print('---------数据集加载完毕，开始测试----------------')
     test_result_name = 'test_result.csv'
     with open(test_result_name, 'a+') as f:

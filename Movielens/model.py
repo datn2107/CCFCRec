@@ -1,17 +1,14 @@
-import math
 import os
-import argparse
-import torch
-import torch.utils.data
-from torch import nn
-import torch.nn.functional as F
-from Movielens.dataset import RatingDataset, read_img_feature, read_genres
-from tqdm import tqdm
-import pandas as pd
+import math
 import time
-from Movielens.dataset import serialize_user
-from metric import Validate
-from myargs import get_args, args_tostring
+import pandas as pd
+import torch
+from torch import nn
+from tqdm import tqdm
+
+
+from myargs import args_tostring
+
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
