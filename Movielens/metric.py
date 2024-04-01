@@ -71,7 +71,7 @@ def ndcg_k(idx, recommend, grouthtruths, k):
 class ValidateItems:
     def __init__(self, val_data, img_features, onehot_features):
         print("validateItem class init")
-        self.item = val_data[:, 1]
+        self.item = set(val_data[:, 1])
         self.item_user_dict = {}
         for data in val_data:
             if data[1] not in self.item_user_dict:
@@ -124,7 +124,7 @@ class ValidateUsers:
     def __init__(self, val_data, img_features, onehot_features, n_users, n_items):
         print("validate class init")
         self.n_users, self.n_items = n_users, n_items
-        self.user = val_data[:, 0]
+        self.user = set(val_data[:, 0])
         self.user_item_dict = {}
         self.items_id = {}
         for data in val_data:
@@ -156,7 +156,7 @@ class ValidateUsers:
                 _, ratings = predict(model, genre, img_feature, max_k)
             all_ratings[:, self.items_id[it]] = ratings
 
-        for u in tqdm(self.user):
+        for u in self.user:
             recommend_items = np.argsort(-all_ratings[u])
 
             # Calculate hr indicator
