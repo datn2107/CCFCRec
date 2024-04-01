@@ -126,10 +126,14 @@ class ValidateUsers:
         self.n_users, self.n_items = n_users, n_items
         self.user = val_data[:, 0]
         self.user_item_dict = {}
+        self.items_id = {}
         for data in val_data:
             if data[0] not in self.user_item_dict:
                 self.user_item_dict[data[0]] = []
             self.user_item_dict[data[0]].append(data[1])
+
+            if data[1] not in self.items_id:
+                self.items_id[data[1]] = len(self.items_id)
 
         self.img_features = img_features
         self.onehot_features = onehot_features
@@ -141,7 +145,7 @@ class ValidateUsers:
         max_k = 20
         all_ratings = np.zeros((self.n_users, self.n_items))
 
-        for it in tqdm(self.item):
+        for it in tqdm(self.items_id.keys()):
             # output
             model = model.to(device)  # move to cpu
             genre = torch.tensor(self.onehot_features[it])
@@ -150,7 +154,7 @@ class ValidateUsers:
             img_feature = img_feature.to(device)
             with torch.no_grad():
                 _, ratings = predict(model, genre, img_feature, max_k)
-            all_ratings[:, it] = ratings
+            all_ratings[:, self.items_id[it]] = ratings
 
         for u in tqdm(self.user):
             recommend_items = np.argsort(-all_ratings[u])
