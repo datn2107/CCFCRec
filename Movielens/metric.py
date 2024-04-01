@@ -61,7 +61,7 @@ def ndcg_k(idx, recommend, grouthtruths, k):
             ratings.append(1.0)
         else:
             ratings.append(0.0)
-    ratings_ideal = [1] * len(ratings)
+    ratings_ideal = sorted(ratings, reverse=True)
     ideal_dcg = dcg_k(ratings_ideal)
     if ideal_dcg != 0:
         ndcg = (dcg_k(ratings) / ideal_dcg)
