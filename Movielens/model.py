@@ -84,7 +84,7 @@ class CCFCRec(nn.Module):
         return q_v_c
 
 
-def train(model, train_loader, optimizer, validator, args):
+def train(model, train_loader, optimizer, items_validator, users_validator, args):
     print("model start train!")
     model_save_dir = os.path.join(args.data_path, 'result', 'CCFCRec')
     test_save_path = os.path.join(model_save_dir, 'test_result.csv')
@@ -177,13 +177,15 @@ def train(model, train_loader, optimizer, validator, args):
             if i_batch % args.save_batch_time == 0:
                 model.eval()
                 print("[{},/13931603]total_loss:,{},{},s".format(i_batch*1024, total_loss.item(), int(time.time()-batch_time)))
-                with torch.no_grad():
-                    hr_5, hr_10, hr_20, ndcg_5, ndcg_10, ndcg_20 = validator.start_validate(model)
-                with open(test_save_path, 'a+') as f:
-                    print("test result: hr_5:{}, hr_10:{}, hr_20:{}, ndcg_5:{}, ndcg_10:{}, ndcg_20:{}".format(
-                        hr_5, hr_10, hr_20, ndcg_5, ndcg_10, ndcg_20))
-                    f.write("{},{},{},{},{},{},{},{},{}\n".format(y_ukv+y_ukv2, contrast_sum, self_contrast_sum,
-                                                                  hr_5, hr_10, hr_20, ndcg_5, ndcg_10, ndcg_20))
+
+                for validator in [items_validator, users_validator]:
+                    print("Validator type:", validator.__class__.__name__)
+                    with torch.no_grad():
+                        hr_5, hr_10, hr_20, ndcg_5, ndcg_10, ndcg_20 = validator.start_validate(model)
+                    with open(test_save_path, 'a+') as f:
+                        f.write("{},{},{},{},{},{},{},{},{}\n".format(y_ukv+y_ukv2, contrast_sum, self_contrast_sum,
+                                                                    hr_5, hr_10, hr_20, ndcg_5, ndcg_10, ndcg_20))
+
                 # 保存模型
                 batch_time = time.time()
                 torch.save(model.state_dict(), model_save_dir + '/epoch_' + str(i_epoch) + "batch_" + str(i_batch) + ".pt")

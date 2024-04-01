@@ -71,4 +71,4 @@ if __name__ == "__main__":
         metadata['n_val_cold_items']
     )
 
-    train(myModel, train_loader, optimizer, users_validator, args)
+    train(myModel, train_loader, optimizer, items_validator, users_validator, args)
