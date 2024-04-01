@@ -29,8 +29,8 @@ if __name__ == "__main__":
 
     cold_items = np.load(os.path.join(args.data_path, "cold_items.npy"), allow_pickle=True).item()
     warm_items = np.load(os.path.join(args.data_path, "warm_items.npy"), allow_pickle=True).item()
-    img_features = np.load(os.path.join(args.data_path, "v_features.npy"))
-    movies_onehot = np.load(os.path.join(args.data_path, "onehot_features.npy"))
+    img_features = np.load(os.path.join(args.data_path, "v_features.npy")).astype(np.float32)
+    movies_onehot = np.load(os.path.join(args.data_path, "onehot_features.npy")).astype(np.int32)
 
     positive_items_for_user, negative_items_for_user = load_postive_negative_items_each_user(train_data, warm_items)
 

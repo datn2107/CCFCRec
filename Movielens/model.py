@@ -88,7 +88,7 @@ def train(model, train_loader, optimizer, validator, args):
     print("model start train!")
     model_save_dir = os.path.join(args.data_path, 'result', 'CCFCRec')
     test_save_path = os.path.join(model_save_dir, 'test_result.csv')
-    os.makedirs(model_save_dir)
+    os.makedirs(model_save_dir, exist_ok=True)
 
     print("model train at:", time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
     # Write hyperparameters
