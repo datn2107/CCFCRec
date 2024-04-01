@@ -7,7 +7,7 @@ import numpy as np
 from model import CCFCRec, train
 from dataset import RatingDataset, load_postive_negative_items_each_user
 from myargs import get_args, args_tostring
-from metric import Validate
+from metric import ValidateItems, ValidateUsers
 
 
 if __name__ == "__main__":
@@ -25,7 +25,7 @@ if __name__ == "__main__":
 
     # negative user id
     train_data = np.load(train_path)
-    val_path = np.load(val_path)
+    val_data = np.load(val_path)
 
     cold_items = np.load(os.path.join(args.data_path, "cold_items.npy"), allow_pickle=True).item()
     warm_items = np.load(os.path.join(args.data_path, "warm_items.npy"), allow_pickle=True).item()
@@ -58,10 +58,17 @@ if __name__ == "__main__":
     optimizer = torch.optim.Adam(
         myModel.parameters(), lr=args.learning_rate, weight_decay=0.1
     )
-    validator = Validate(
-        val_path,
+    items_validator = ValidateItems(
+        val_data,
         img_features,
         movies_onehot
     )
+    # user_validator = ValidateUsers(
+    #     val_data,
+    #     img_features,
+    #     movies_onehot,
+    #     metadata['n_users'],
+    #     metadata['n_val_cold_items']
+    # )
 
-    train(myModel, train_loader, optimizer, validator, args)
+    train(myModel, train_loader, optimizer, items_validator, args)

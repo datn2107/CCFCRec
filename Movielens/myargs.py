@@ -55,7 +55,7 @@ def get_args():
     parser.add_argument(
         "--save-batch-time",
         type=int,
-        default=3000,
+        default=1,
         help="every batch time save the model",
     )
     args = parser.parse_args()

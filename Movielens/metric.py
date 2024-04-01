@@ -11,7 +11,7 @@ from myargs import get_args
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
-def get_similar_user_speed(model, genres, img, k):
+def predict(model, genres, img, k):
     user_embedding = model.user_embedding
     user_idx = torch.tensor(list(range(user_embedding.shape[0])))
     user_idx = user_idx.to(device)
@@ -35,42 +35,42 @@ def get_similar_user_speed(model, genres, img, k):
     ratings = torch.mul(user_emb, q_v_c).sum(dim=1)
     index = torch.argsort(-ratings)
 
-    return index[0:k].cpu().detach().numpy().tolist()
+    return index[0:k].cpu().detach().numpy().tolist(), ratings.cpu().detach().numpy().tolist()
 
 
-def hr_at_k(item, recommend_users, item_user_dict, k):
-    groundtruth_user = item_user_dict.get(item)
-    recommend_users = recommend_users[0:k]
-    inter = set(groundtruth_user).intersection(set(recommend_users))
+def hr_at_k(idx, recommend, grouthtruths, k):
+    grouthtruth = set(grouthtruths.get(idx))
+    recommend = set(recommend[0:k])
+    inter = grouthtruth.intersection(recommend)
     return len(inter)
 
 
 def dcg_k(r):
     r = np.asarray(r)
-    val = np.sum((np.power(2, r) - 1) / (np.log2(np.arange(1+1, r.size + 2))))
+    val = np.sum((np.power(2, r) - 1) / (np.log2(np.arange(1 + 1, r.size + 2))))
     return val
 
 
-def ndcg_k(item, recommend_users, item_user_dict, k):
-    groundtruth_user = item_user_dict.get(item)
-    recommend_users = recommend_users[0:k]
+def ndcg_k(idx, recommend, grouthtruths, k):
+    grouthtruth = set(grouthtruths.get(idx))
+    recommend = recommend[0:k]
     ratings = []
     ndcg = 0.0
-    for u in recommend_users:
-        if u in groundtruth_user:
+    for u in recommend:
+        if u in grouthtruth:
             ratings.append(1.0)
         else:
             ratings.append(0.0)
-    ratings_ideal = sorted(ratings, reverse=True)
+    ratings_ideal = [1] * len(ratings)
     ideal_dcg = dcg_k(ratings_ideal)
     if ideal_dcg != 0:
         ndcg = (dcg_k(ratings) / ideal_dcg)
     return ndcg
 
 
-class Validate:
+class ValidateItems:
     def __init__(self, val_data, img_features, onehot_features):
-        print("validate class init")
+        print("validateItem class init")
         self.item = val_data[:, 1]
         self.item_user_dict = {}
         for data in val_data:
@@ -82,38 +82,97 @@ class Validate:
         self.onehot_features = onehot_features
 
     def start_validate(self, model):
-        # 开始评估
+        # Start assessment
         hr_hit_cnt_5, hr_hit_cnt_10, hr_hit_cnt_20 = 0, 0, 0
         ndcg_sum_5, ndcg_sum_10, ndcg_sum_20 = 0.0, 0.0, 0.0
         max_k = 20
-        it_idx = 0
-        for it in self.item:
-            # 输出
+
+        for it in tqdm(self.item):
+            # output
             model = model.to(device)  # move to cpu
             genre = torch.tensor(self.onehot_features[it])
             img_feature = torch.tensor(self.img_features[it])
             genre = genre.to(device)
             img_feature = img_feature.to(device)
             with torch.no_grad():
-                recommend_users = get_similar_user_speed(model, genre, img_feature, max_k)
-            # 计算hr指标
-            # 计算p@k指标
+                recommend_users, _ = predict(model, genre, img_feature, max_k)
+
+            # Calculate hr indicator
+            # Calculate p@k indicator
             hr_hit_cnt_5 += hr_at_k(it, recommend_users, self.item_user_dict, 5)
             hr_hit_cnt_10 += hr_at_k(it, recommend_users, self.item_user_dict, 10)
             hr_hit_cnt_20 += hr_at_k(it, recommend_users, self.item_user_dict, 20)
-            # 计算NDCG指标
+
+            # Calculate NDCG indicator
             ndcg_sum_5 += ndcg_k(it, recommend_users, self.item_user_dict, 5)
             ndcg_sum_10 += ndcg_k(it, recommend_users, self.item_user_dict, 10)
             ndcg_sum_20 += ndcg_k(it, recommend_users, self.item_user_dict, 20)
-            # print("评估进度:", it_idx, "/", len(item))
-            it_idx += 1
+
         item_len = len(self.item)
         hr_5 = hr_hit_cnt_5 / (item_len * 5)
         hr_10 = hr_hit_cnt_10 / (item_len * 10)
         hr_20 = hr_hit_cnt_20 / (item_len * 20)
-        ndcg_5 = ndcg_sum_5/item_len
-        ndcg_10 = ndcg_sum_10/item_len
-        ndcg_20 = ndcg_sum_20/item_len
+        ndcg_5 = ndcg_sum_5 / item_len
+        ndcg_10 = ndcg_sum_10 / item_len
+        ndcg_20 = ndcg_sum_20 / item_len
+        print("hr@5:", "hr_10:", "hr_20:", 'ndcg@5', 'ndcg@10', 'ndcg@20')
+        print(hr_5, ',', hr_10, ',', hr_20, ',', ndcg_5, ',', ndcg_10, ',', ndcg_20)
+        return hr_5, hr_10, hr_20, ndcg_5, ndcg_10, ndcg_20
+
+
+class ValidateUsers:
+    def __init__(self, val_data, img_features, onehot_features, n_users, n_items):
+        print("validate class init")
+        self.n_users, self.n_items = n_users, n_items
+        self.user = val_data[:, 0]
+        self.user_item_dict = {}
+        for data in val_data:
+            if data[0] not in self.user_item_dict:
+                self.user_item_dict[data[0]] = []
+            self.user_item_dict[data[0]].append(data[1])
+
+        self.img_features = img_features
+        self.onehot_features = onehot_features
+
+    def start_validate(self, model):
+        # Start assessment
+        hr_hit_cnt_5, hr_hit_cnt_10, hr_hit_cnt_20 = 0, 0, 0
+        ndcg_sum_5, ndcg_sum_10, ndcg_sum_20 = 0.0, 0.0, 0.0
+        max_k = 20
+        all_ratings = np.zeros((self.n_users, self.n_items))
+
+        for it in tqdm(self.item):
+            # output
+            model = model.to(device)  # move to cpu
+            genre = torch.tensor(self.onehot_features[it])
+            img_feature = torch.tensor(self.img_features[it])
+            genre = genre.to(device)
+            img_feature = img_feature.to(device)
+            with torch.no_grad():
+                _, ratings = predict(model, genre, img_feature, max_k)
+            all_ratings[:, it] = ratings
+
+        for u in tqdm(self.user):
+            recommend_items = np.argsort(-all_ratings[u])
+
+            # Calculate hr indicator
+            # Calculate p@k indicator
+            hr_hit_cnt_5 += hr_at_k(u, recommend_items, self.user_item_dict, 5)
+            hr_hit_cnt_10 += hr_at_k(u, recommend_items, self.user_item_dict, 10)
+            hr_hit_cnt_20 += hr_at_k(u, recommend_items, self.user_item_dict, 20)
+
+            # Calculate NDCG indicator
+            ndcg_sum_5 += ndcg_k(u, recommend_items, self.user_item_dict, 5)
+            ndcg_sum_10 += ndcg_k(u, recommend_items, self.user_item_dict, 10)
+            ndcg_sum_20 += ndcg_k(u, recommend_items, self.user_item_dict, 20)
+
+        item_len = len(self.user)
+        hr_5 = hr_hit_cnt_5 / (item_len * 5)
+        hr_10 = hr_hit_cnt_10 / (item_len * 10)
+        hr_20 = hr_hit_cnt_20 / (item_len * 20)
+        ndcg_5 = ndcg_sum_5 / item_len
+        ndcg_10 = ndcg_sum_10 / item_len
+        ndcg_20 = ndcg_sum_20 / item_len
         print("hr@5:", "hr_10:", "hr_20:", 'ndcg@5', 'ndcg@10', 'ndcg@20')
         print(hr_5, ',', hr_10, ',', hr_20, ',', ndcg_5, ',', ndcg_10, ',', ndcg_20)
         return hr_5, hr_10, hr_20, ndcg_5, ndcg_10, ndcg_20

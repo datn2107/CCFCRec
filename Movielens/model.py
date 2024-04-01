@@ -180,6 +180,8 @@ def train(model, train_loader, optimizer, validator, args):
                 with torch.no_grad():
                     hr_5, hr_10, hr_20, ndcg_5, ndcg_10, ndcg_20 = validator.start_validate(model)
                 with open(test_save_path, 'a+') as f:
+                    print("test result: hr_5:{}, hr_10:{}, hr_20:{}, ndcg_5:{}, ndcg_10:{}, ndcg_20:{}".format(
+                        hr_5, hr_10, hr_20, ndcg_5, ndcg_10, ndcg_20))
                     f.write("{},{},{},{},{},{},{},{},{}\n".format(y_ukv+y_ukv2, contrast_sum, self_contrast_sum,
                                                                   hr_5, hr_10, hr_20, ndcg_5, ndcg_10, ndcg_20))
                 # 保存模型
