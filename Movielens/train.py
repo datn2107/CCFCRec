@@ -22,10 +22,12 @@ if __name__ == "__main__":
 
     train_path = os.path.join(args.data_path, "train_all_warm_interactions_negative_users.npy")
     val_path = os.path.join(args.data_path, "val_cold_interactions.npy")
+    test_path = os.path.join(args.data_path, "test_cold_interactions.npy")
 
     # negative user id
     train_data = np.load(train_path)
     val_data = np.load(val_path)
+    test_data = np.load(test_path)
 
     cold_items = np.load(os.path.join(args.data_path, "cold_items.npy"), allow_pickle=True).item()
     warm_items = np.load(os.path.join(args.data_path, "warm_items.npy"), allow_pickle=True).item()
@@ -58,17 +60,32 @@ if __name__ == "__main__":
     optimizer = torch.optim.Adam(
         myModel.parameters(), lr=args.learning_rate, weight_decay=0.1
     )
-    items_validator = ValidateItems(
-        val_data,
-        img_features,
-        movies_onehot
-    )
-    users_validator = ValidateUsers(
-        val_data,
-        img_features,
-        movies_onehot,
-        metadata['n_users'],
-        metadata['n_val_cold_items']
-    )
 
-    train(myModel, train_loader, optimizer, items_validator, users_validator, args)
+    validators = {
+        'items_validator_validation_set': ValidateItems(
+            val_data,
+            img_features,
+            movies_onehot
+        ),
+        'items_validator_test_set': ValidateItems(
+            test_data,
+            img_features,
+            movies_onehot
+        ),
+        'users_validator_validation_set': ValidateUsers(
+            val_data,
+            img_features,
+            movies_onehot,
+            metadata['n_users'],
+            metadata['n_val_cold_items']
+        ),
+        'users_validator_test_set': ValidateUsers(
+            test_data,
+            img_features,
+            movies_onehot,
+            metadata['n_users'],
+            metadata['n_test_cold_items']
+        )
+    }
+
+    train(myModel, train_loader, optimizer, validators, args)

@@ -84,22 +84,23 @@ class CCFCRec(nn.Module):
         return q_v_c
 
 
-def train(model, train_loader, optimizer, items_validator, users_validator, args):
-    print("model start train!")
+def train(model, train_loader, optimizer, validators, args):
+    print("Model start train!")
     model_save_dir = os.path.join(args.data_path, 'result', 'CCFCRec')
-    test_save_path = os.path.join(model_save_dir, 'test_result.csv')
     os.makedirs(model_save_dir, exist_ok=True)
 
-    print("model train at:", time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
+    print("Model train at:", time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
     # Write hyperparameters
     with open(model_save_dir + "/readme.txt", 'a+') as f:
         str_ = args_tostring(args)
         f.write(str_)
-        f.write('\nsave dir:' + model_save_dir)
-        f.write('\nmodel train time:' + (time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
+        f.write('\nSave dir:' + model_save_dir)
+        f.write('\nModel train time:' + (time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
 
-    with open(test_save_path, 'a+') as f:
-        f.write("loss,contrast_loss,self_contrast_loss,p@5,p@10,p@20,ndcg@5,ndcg@10,ndcg@20\n")
+    for name, validator in validators.items():
+        test_save_path = os.path.join(model_save_dir, name + '_result.csv')
+        with open(test_save_path, 'a+') as f:
+            f.write("loss,contrast_loss,self_contrast_loss,p@5,p@10,p@20,ndcg@5,ndcg@10,ndcg@20\n")
 
     for i_epoch in range(args.epoch):
         i_batch = 0
@@ -173,19 +174,19 @@ def train(model, train_loader, optimizer, items_validator, users_validator, args
 
             total_loss.backward()
             optimizer.step()
-            i_batch += 1
-            if i_batch % args.save_batch_time == 0:
-                model.eval()
-                print("[{},/13931603]total_loss:,{},{},s".format(i_batch*1024, total_loss.item(), int(time.time()-batch_time)))
 
-                for validator in [items_validator, users_validator]:
-                    print("Validator type:", validator.__class__.__name__)
-                    with torch.no_grad():
-                        hr_5, hr_10, hr_20, ndcg_5, ndcg_10, ndcg_20 = validator.start_validate(model)
-                    with open(test_save_path, 'a+') as f:
-                        f.write("{},{},{},{},{},{},{},{},{}\n".format(y_ukv+y_ukv2, contrast_sum, self_contrast_sum,
-                                                                    hr_5, hr_10, hr_20, ndcg_5, ndcg_10, ndcg_20))
+        model.eval()
 
-                # 保存模型
-                batch_time = time.time()
-                torch.save(model.state_dict(), model_save_dir + '/epoch_' + str(i_epoch) + "batch_" + str(i_batch) + ".pt")
+        print("Epoch:", i_epoch, "loss:", total_loss.item(), "contrast_loss:", contrast_sum.item())
+        for name, validator in validators.items():
+            print("Start validate:", name)
+            with torch.no_grad():
+                hr_5, hr_10, hr_20, ndcg_5, ndcg_10, ndcg_20 = validator.start_validate(model)
+            with open(test_save_path, 'a+') as f:
+                f.write("{},{},{},{},{},{},{},{},{}\n".format(y_ukv+y_ukv2, contrast_sum, self_contrast_sum,
+                                                            hr_5, hr_10, hr_20, ndcg_5, ndcg_10, ndcg_20))
+
+        # save model
+        batch_time = time.time()
+        torch.save(model.state_dict(), model_save_dir + '/epoch_' + str(i_epoch) + "batch_" + str(i_batch) + ".pt")
+        print("")

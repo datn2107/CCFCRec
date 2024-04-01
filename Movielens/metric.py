@@ -154,7 +154,9 @@ class ValidateUsers:
             img_feature = img_feature.to(device)
             with torch.no_grad():
                 _, ratings = predict(model, genre, img_feature, max_k)
-            all_ratings[:, self.items_id[it]] = ratings
+
+            rankings = np.unique(ratings, return_inverse=True)[1]
+            all_ratings[:, self.items_id[it]] = rankings
 
         for u in self.user:
             recommend_items = np.argsort(-all_ratings[u])
@@ -180,29 +182,3 @@ class ValidateUsers:
         print("hr@5:", "hr_10:", "hr_20:", 'ndcg@5', 'ndcg@10', 'ndcg@20')
         print(hr_5, ',', hr_10, ',', hr_20, ',', ndcg_5, ',', ndcg_10, ',', ndcg_20)
         return hr_5, hr_10, hr_20, ndcg_5, ndcg_10, ndcg_20
-
-
-if __name__ == '__main__':
-    from model import CCFCRec
-
-    args = get_args()
-    train_df = pd.read_csv("data/train_rating.csv", dtype={'userId': int, 'movieId': int, 'neg_user_id': int})
-    total_user_set = train_df['userId']
-    user_serialize_dict = serialize_user(total_user_set)
-    img_feature = read_img_feature('data/img_feature.csv')
-    movie_onehot = read_genres('data/movies_onehot.csv')
-    myModel = CCFCRec(args)
-    validator = Validate(validate_csv='data/test_rating.csv', user_serialize_dict=user_serialize_dict,
-                         img=img_feature, genres=movie_onehot)
-
-    print('---------数据集加载完毕，开始测试----------------')
-    test_result_name = 'test_result.csv'
-    with open(test_result_name, 'a+') as f:
-        f.write("hr@5,hr@10,hr@20,ndcg@5,ndcg@10,ndcg@20\n")
-    load_dir = 'result/2022_10_14/'
-    load_array = ['0batch_3000', '0batch_6000']
-    for model in load_array:
-        myModel.load_state_dict(torch.load(load_dir+'/epoch_'+model+'.pt'))
-        hr5, hr_10, hr_20, n_5, n_10, n_20 = validator.start_validate(myModel)
-        with open(test_result_name, 'a+') as f:
-            f.write("{},{},{},{},{},{}\n".format(hr5, hr_10, hr_20, n_5, n_10, n_20))
