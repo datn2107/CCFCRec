@@ -1,6 +1,7 @@
 import os
 import math
 import time
+import numpy as np
 import pandas as pd
 import torch
 from torch import nn
@@ -84,7 +85,7 @@ class CCFCRec(nn.Module):
         return q_v_c
 
 
-def train(model, train_loader, optimizer, validators, args):
+def train(model, train_loader, optimizer, validators, key_validators_name, args):
     print("Model start train!")
     model_save_dir = os.path.join(args.data_path, 'result', 'CCFCRec')
     os.makedirs(model_save_dir, exist_ok=True)
@@ -102,6 +103,7 @@ def train(model, train_loader, optimizer, validators, args):
         with open(test_save_path, 'a+') as f:
             f.write("loss,contrast_loss,self_contrast_loss,p@5,p@10,p@20,ndcg@5,ndcg@10,ndcg@20\n")
 
+    best_recall = 0
     for i_epoch in range(args.epoch):
         for user, item, item_genres, item_img_feature, neg_user, positive_item_list, negative_item_list, self_neg_list in tqdm(train_loader):
             optimizer.zero_grad()
@@ -178,7 +180,14 @@ def train(model, train_loader, optimizer, validators, args):
         for name, validator in validators.items():
             print("Start validate:", name)
             with torch.no_grad():
-                hr_5, hr_10, hr_20, ndcg_5, ndcg_10, ndcg_20 = validator.start_validate(model)
+                hr_5, hr_10, hr_20, ndcg_5, ndcg_10, ndcg_20, ratings = validator.start_validate(model)
+
+            if name == key_validators_name:
+                if hr_10 >= best_recall:
+                    best_recall = hr_10
+                    torch.save(model.state_dict(), model_save_dir + '/best_model.pt')
+                    np.save(model_save_dir + '/best_model_ratings.npy', ratings)
+
             with open(test_save_path, 'a+') as f:
                 f.write("{},{},{},{},{},{},{},{},{}\n".format(y_ukv+y_ukv2, contrast_sum, self_contrast_sum,
                                                             hr_5, hr_10, hr_20, ndcg_5, ndcg_10, ndcg_20))

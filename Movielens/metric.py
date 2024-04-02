@@ -1,11 +1,5 @@
-import os
-import time
 import torch
 import numpy as np
-import pandas as pd
-from tqdm import tqdm
-
-from myargs import get_args
 
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -117,7 +111,7 @@ class ValidateItems:
         ndcg_20 = ndcg_sum_20 / item_len
         print("hr@5:", "hr_10:", "hr_20:", 'ndcg@5', 'ndcg@10', 'ndcg@20')
         print(hr_5, ',', hr_10, ',', hr_20, ',', ndcg_5, ',', ndcg_10, ',', ndcg_20)
-        return hr_5, hr_10, hr_20, ndcg_5, ndcg_10, ndcg_20
+        return hr_5, hr_10, hr_20, ndcg_5, ndcg_10, ndcg_20, None
 
 
 class ValidateUsers:
@@ -182,4 +176,4 @@ class ValidateUsers:
         ndcg_20 = ndcg_sum_20 / item_len
         print("hr@5:", "hr_10:", "hr_20:", 'ndcg@5', 'ndcg@10', 'ndcg@20')
         print(hr_5, ',', hr_10, ',', hr_20, ',', ndcg_5, ',', ndcg_10, ',', ndcg_20)
-        return hr_5, hr_10, hr_20, ndcg_5, ndcg_10, ndcg_20
+        return hr_5, hr_10, hr_20, ndcg_5, ndcg_10, ndcg_20, all_ratings

@@ -67,17 +67,17 @@ if __name__ == "__main__":
             img_features,
             movies_onehot
         ),
-        'items_validator_test_set': ValidateItems(
-            test_data,
-            img_features,
-            movies_onehot
-        ),
         'users_validator_validation_set': ValidateUsers(
             val_data,
             img_features,
             movies_onehot,
             metadata['n_users'],
             metadata['n_val_cold_items']
+        ),
+        'items_validator_test_set': ValidateItems(
+            test_data,
+            img_features,
+            movies_onehot
         ),
         'users_validator_test_set': ValidateUsers(
             test_data,
@@ -88,4 +88,4 @@ if __name__ == "__main__":
         )
     }
 
-    train(myModel, train_loader, optimizer, validators, args)
+    train(myModel, train_loader, optimizer, validators, 'users_validator_test_set', args)
