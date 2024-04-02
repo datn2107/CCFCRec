@@ -128,12 +128,12 @@ class ValidateUsers:
         self.user_item_dict = {}
         self.items_id = {}
         for data in val_data:
-            if data[0] not in self.user_item_dict:
-                self.user_item_dict[data[0]] = []
-            self.user_item_dict[data[0]].append(data[1])
-
             if data[1] not in self.items_id:
                 self.items_id[data[1]] = len(self.items_id)
+
+            if data[0] not in self.user_item_dict:
+                self.user_item_dict[data[0]] = []
+            self.user_item_dict[data[0]].append(self.items_id[data[1]])
 
         self.img_features = img_features
         self.onehot_features = onehot_features

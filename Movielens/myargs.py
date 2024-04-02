@@ -52,12 +52,6 @@ def get_args():
     parser.add_argument(
         "--user-flag", type=bool, default=False, help="use user to q_v_c flag"
     )
-    parser.add_argument(
-        "--save-batch-time",
-        type=int,
-        default=1,
-        help="every batch time save the model",
-    )
     args = parser.parse_args()
 
     return args

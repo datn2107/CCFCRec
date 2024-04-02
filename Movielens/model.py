@@ -103,9 +103,6 @@ def train(model, train_loader, optimizer, validators, args):
             f.write("loss,contrast_loss,self_contrast_loss,p@5,p@10,p@20,ndcg@5,ndcg@10,ndcg@20\n")
 
     for i_epoch in range(args.epoch):
-        i_batch = 0
-        batch_time = time.time()
-
         for user, item, item_genres, item_img_feature, neg_user, positive_item_list, negative_item_list, self_neg_list in tqdm(train_loader):
             optimizer.zero_grad()
             model.train()
@@ -187,6 +184,5 @@ def train(model, train_loader, optimizer, validators, args):
                                                             hr_5, hr_10, hr_20, ndcg_5, ndcg_10, ndcg_20))
 
         # save model
-        batch_time = time.time()
-        torch.save(model.state_dict(), model_save_dir + '/epoch_' + str(i_epoch) + "batch_" + str(i_batch) + ".pt")
+        torch.save(model.state_dict(), model_save_dir + '/epoch_' + str(i_epoch) + ".pt")
         print("")
