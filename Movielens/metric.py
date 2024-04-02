@@ -155,7 +155,8 @@ class ValidateUsers:
             with torch.no_grad():
                 _, ratings = predict(model, genre, img_feature, max_k)
 
-            rankings = np.unique(ratings, return_inverse=True)[1]
+            rankings = np.zeros_like(ratings)
+            rankings[np.argsort(-ratings)] = np.arange(len(ratings), 0, -1)
             all_ratings[:, self.items_id[it]] = rankings
 
         for u in self.user:
