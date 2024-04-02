@@ -85,7 +85,7 @@ class CCFCRec(nn.Module):
         return q_v_c
 
 
-def train(model, train_loader, optimizer, validators, key_validators_name, args):
+def train(model, train_loader, optimizer, validators, args):
     print("Model start train!")
     model_save_dir = os.path.join(args.data_path, 'result', 'CCFCRec')
     os.makedirs(model_save_dir, exist_ok=True)
@@ -182,7 +182,7 @@ def train(model, train_loader, optimizer, validators, key_validators_name, args)
             with torch.no_grad():
                 hr_5, hr_10, hr_20, ndcg_5, ndcg_10, ndcg_20, ratings = validator.start_validate(model)
 
-            if name == key_validators_name:
+            if name == args.key_validators_name:
                 if hr_10 >= best_recall:
                     best_recall = hr_10
                     torch.save(model.state_dict(), model_save_dir + '/best_model.pt')

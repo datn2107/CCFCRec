@@ -52,6 +52,9 @@ def get_args():
     parser.add_argument(
         "--user-flag", type=bool, default=False, help="use user to q_v_c flag"
     )
+    parser.add_argument(
+        '--key-validators-name', type=str, default="users_validator_test_set", help="validators name to indicate the best model"
+    )
     args = parser.parse_args()
 
     return args

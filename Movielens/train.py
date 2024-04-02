@@ -88,4 +88,4 @@ if __name__ == "__main__":
         )
     }
 
-    train(myModel, train_loader, optimizer, validators, 'users_validator_test_set', args)
+    train(myModel, train_loader, optimizer, validators, args)
