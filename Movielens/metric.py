@@ -35,7 +35,7 @@ def predict(model, genres, img, k):
     ratings = torch.mul(user_emb, q_v_c).sum(dim=1)
     index = torch.argsort(-ratings)
 
-    return index[0:k].cpu().detach().numpy().tolist(), ratings.cpu().detach().numpy().tolist()
+    return index[0:k].cpu().detach().numpy().tolist(), ratings.cpu().detach().numpy()
 
 
 def hr_at_k(idx, recommend, grouthtruths, k):
@@ -156,7 +156,7 @@ class ValidateUsers:
                 _, ratings = predict(model, genre, img_feature, max_k)
 
             rankings = np.zeros_like(ratings)
-            rankings[np.argsort(-ratings)] = np.arange(len(ratings), 0, -1)
+            rankings[np.argsort(ratings)] = np.arange(len(ratings))
             all_ratings[:, self.items_id[it]] = rankings
 
         for u in self.user:
