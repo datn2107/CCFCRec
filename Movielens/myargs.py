@@ -4,6 +4,7 @@ import argparse
 def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--data-path", type=str, default="data/", help="data path")
+    parser.add_argument("--save-path", type=str, default="data/result", help="save path")
     parser.add_argument("--batch-size", type=int, default=1024, help="batch_size")
     parser.add_argument(
         "--learning-rate", type=float, default=0.000005, help="learning rate"

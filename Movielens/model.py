@@ -12,8 +12,6 @@ from myargs import args_tostring
 
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-os.environ['CUDA_VISIBLE_DEVICES'] = '0'
-torch.cuda.set_device(0)
 
 
 # CCFCRec
@@ -87,7 +85,7 @@ class CCFCRec(nn.Module):
 
 def train(model, train_loader, optimizer, validators, args):
     print("Model start train!")
-    model_save_dir = os.path.join(args.data_path, 'result', 'CCFCRec')
+    model_save_dir = os.path.join(args.save_path)
     os.makedirs(model_save_dir, exist_ok=True)
 
     print("Model train at:", time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
