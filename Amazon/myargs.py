@@ -22,9 +22,6 @@ def get_args():
         "--n-self-negative", type=int, default=40, help="contrast negative number"
     )
     parser.add_argument(
-        "--attr-num", type=int, default=3127, help="item attribute number"
-    )
-    parser.add_argument(
         "--attr-present-dim", type=int, default=256, help="the dimension of present"
     )
     parser.add_argument(

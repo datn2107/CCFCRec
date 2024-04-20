@@ -34,6 +34,8 @@ if __name__ == "__main__":
     movies_onehot = np.load(os.path.join(args.data_path, "onehot_features.npy")).astype(np.int32)
     category_map = np.load(os.path.join(args.data_path, "categories_id.npy"), allow_pickle=True).item()
 
+    args.attr_num = len(category_map)
+
     # load dataset
     dataSet = RatingDataset(
         train_data,
