@@ -46,6 +46,7 @@ class CCFCRec(nn.Module):
             self.item_embedding = nn.Parameter(torch.FloatTensor(args.n_items, args.implicit_dim))
 
         # Define the generation layer to jointly generate q_v_c from the information of (q_v_a, u), and generate item embeddings containing collaborative information.        self.gen_layer1 = nn.Linear(args.attr_present_dim*2, args.cat_implicit_dim)
+        self.gen_layer1 = nn.Linear(args.attr_present_dim*2, args.cat_implicit_dim)
         self.gen_layer2 = nn.Linear(args.attr_present_dim, args.attr_present_dim)
 
         # Parameter initialization

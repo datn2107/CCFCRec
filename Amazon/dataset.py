@@ -27,7 +27,7 @@ class RatingDataset(torch.utils.data.Dataset):
 
         # 读其他内容
         self.img_feature_dict = img_features
-        self.genres_dict = genres
+        self.genres = genres
 
         # print(self.item_pn_df)
         self.user = self.train_data[:, 0]
@@ -42,23 +42,22 @@ class RatingDataset(torch.utils.data.Dataset):
         self.n_positive = n_positive
         self.n_negative = n_negative
         self.category_num = category_num
-        self.user_item_interaction_dict, self.item_user_interaction_dict = build_interaction_dict()
+        self.user_item_interaction_dict, self.item_user_interaction_dict = build_interaction_dict(train_data)
         print("The number of users in the entire data set is:", self.n_users, "The number of users in train_set is:", len(set(self.user)))
 
     def __len__(self):
-        return len(self.train_csv)
+        return len(self.train_data)
 
     def __getitem__(self, index):
         user = self.user[index]
         item = self.item[index]
 
         # process item genres
-        genres = self.genres_dict.get(item)
+        genres = self.genres[item]
         genres[genres == 0] = -1
-        genres = genres.squeeze(dim=1)
 
         # process item feature
-        img_feature = self.img_feature_dict.get(item)
+        img_feature = self.img_feature_dict[item]
 
         # neg_user = sample_negative_user(self.user, interaction_user_set)
         neg_user = self.neg_user[index]
