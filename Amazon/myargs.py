@@ -3,41 +3,41 @@ import argparse
 
 def get_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--data_path", type=str, default="data/", help="data path")
+    parser.add_argument("--data-path", type=str, default="data/", help="data path")
     parser.add_argument(
         "--save-path", type=str, default="data/result", help="save path"
     )
-    parser.add_argument("--batch_size", type=int, default=1024, help="batch_size")
+    parser.add_argument("--batch-size", type=int, default=1024, help="batch-size")
     parser.add_argument(
-        "--learning_rate", type=float, default=0.0001, help="learning rate"
+        "--learning-rate", type=float, default=0.0001, help="learning rate"
     )
-    parser.add_argument("--weight_decay", type=float, default=0.1, help="weight decay")
+    parser.add_argument("--weight-decay", type=float, default=0.1, help="weight decay")
     parser.add_argument(
-        "--n_positive", type=int, default=5, help="contrast positive number"
-    )
-    parser.add_argument(
-        "--n_negative", type=int, default=40, help="contrast negative number"
+        "--n-positive", type=int, default=5, help="contrast positive number"
     )
     parser.add_argument(
-        "--n_self_negative", type=int, default=40, help="contrast negative number"
+        "--n-negative", type=int, default=40, help="contrast negative number"
     )
     parser.add_argument(
-        "--attr_num", type=int, default=3127, help="item attribute number"
+        "--n-self-negative", type=int, default=40, help="contrast negative number"
     )
     parser.add_argument(
-        "--attr_present_dim", type=int, default=256, help="the dimension of present"
+        "--attr-num", type=int, default=3127, help="item attribute number"
     )
     parser.add_argument(
-        "--implicit_dim", type=int, default=256, help="the dimension of u/i present"
+        "--attr-present-dim", type=int, default=256, help="the dimension of present"
     )
     parser.add_argument(
-        "--cat_implicit_dim", type=int, default=256, help="the q_v_c dimension"
+        "--implicit-dim", type=int, default=256, help="the dimension of u/i present"
     )
     parser.add_argument(
-        "--user_number", type=int, default=138493, help="user number in training set"
+        "--cat-implicit-dim", type=int, default=256, help="the q-v-c dimension"
     )
     parser.add_argument(
-        "--item_number", type=int, default=16803, help="item number in training set"
+        "--user-number", type=int, default=138493, help="user number in training set"
+    )
+    parser.add_argument(
+        "--item-number", type=int, default=16803, help="item number in training set"
     )
     parser.add_argument(
         "--tau", type=float, default=0.1, help="contrast loss temperature"
@@ -50,16 +50,16 @@ def get_args():
         "--pretrain", type=bool, default=False, help="user/item embedding pre-training"
     )
     parser.add_argument(
-        "--pretrain_update",
+        "--pretrain-update",
         type=bool,
         default=False,
         help="u/i pretrain embedding update",
     )
     parser.add_argument(
-        "--contrast_flag", type=bool, default=True, help="contrast job flag"
+        "--contrast-flag", type=bool, default=True, help="contrast job flag"
     )
     parser.add_argument(
-        "--user_flag", type=bool, default=False, help="use user to q_v_c flag"
+        "--user-flag", type=bool, default=False, help="use user to q-v-c flag"
     )
     parser.add_argument(
         "--key-validators-name",
