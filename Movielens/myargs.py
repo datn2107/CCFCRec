@@ -4,7 +4,9 @@ import argparse
 def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--data-path", type=str, default="data/", help="data path")
-    parser.add_argument("--save-path", type=str, default="data/result", help="save path")
+    parser.add_argument(
+        "--save-path", type=str, default="data/result", help="save path"
+    )
     parser.add_argument("--batch-size", type=int, default=1024, help="batch_size")
     parser.add_argument(
         "--learning-rate", type=float, default=0.000005, help="learning rate"
@@ -54,7 +56,10 @@ def get_args():
         "--user-flag", type=bool, default=False, help="use user to q_v_c flag"
     )
     parser.add_argument(
-        '--key-validators-name', type=str, default="users_validator_test_set", help="validators name to indicate the best model"
+        "--key-validators-name",
+        type=str,
+        default="users_validator_test_set",
+        help="validators name to indicate the best model",
     )
     args = parser.parse_args()
 
