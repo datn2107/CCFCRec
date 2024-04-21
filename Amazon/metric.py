@@ -79,11 +79,13 @@ class ValidateItems:
             with torch.no_grad():
                 recommend_users, _ = predict(model, genre, img_feature, max_k)
 
+            n_groundtruth = len(set(self.item_user_dict[it]))
+
             # Calculate hr indicator
             # Calculate p@k indicator
-            hr_hit_cnt_5 += hr_at_k(it, recommend_users, self.item_user_dict, 5)
-            hr_hit_cnt_10 += hr_at_k(it, recommend_users, self.item_user_dict, 10)
-            hr_hit_cnt_20 += hr_at_k(it, recommend_users, self.item_user_dict, 20)
+            hr_hit_cnt_5 += hr_at_k(it, recommend_users, self.item_user_dict, 5) / min(5, n_groundtruth) if n_groundtruth > 0 else 1
+            hr_hit_cnt_10 += hr_at_k(it, recommend_users, self.item_user_dict, 10) / min(10, n_groundtruth) if n_groundtruth > 0 else 1
+            hr_hit_cnt_20 += hr_at_k(it, recommend_users, self.item_user_dict, 20) / min(20, n_groundtruth) if n_groundtruth > 0 else 1
 
             # Calculate NDCG indicator
             ndcg_sum_5 += ndcg_k(it, recommend_users, self.item_user_dict, 5)
@@ -91,9 +93,9 @@ class ValidateItems:
             ndcg_sum_20 += ndcg_k(it, recommend_users, self.item_user_dict, 20)
 
         item_len = len(self.item)
-        hr_5 = hr_hit_cnt_5 / (item_len * 5)
-        hr_10 = hr_hit_cnt_10 / (item_len * 10)
-        hr_20 = hr_hit_cnt_20 / (item_len * 20)
+        hr_5 = hr_hit_cnt_5 / item_len
+        hr_10 = hr_hit_cnt_10 / item_len
+        hr_20 = hr_hit_cnt_20 / item_len
         ndcg_5 = ndcg_sum_5 / item_len
         ndcg_10 = ndcg_sum_10 / item_len
         ndcg_20 = ndcg_sum_20 / item_len
@@ -143,7 +145,7 @@ class ValidateUsers:
 
         for u in self.user:
             recommend_items = np.argsort(-all_ratings[u])
-            n_groundtruth = len(self.user_item_dict[u])
+            n_groundtruth = len(set(self.user_item_dict[u]))
 
             # Calculate hr indicator
             # Calculate p@k indicator
