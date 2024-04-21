@@ -139,9 +139,10 @@ class ValidateUsers:
             with torch.no_grad():
                 _, ratings = predict(model, genre, img_feature, max_k)
 
-            rankings = np.zeros_like(ratings)
-            rankings[np.argsort(ratings)] = np.arange(len(ratings))
-            all_ratings[:, self.items_id[it]] = rankings
+            # rankings = np.zeros_like(ratings)
+            # rankings[np.argsort(ratings)] = np.arange(len(ratings))
+            all_ratings[:, self.items_id[it]] = np.zeros_like(ratings)
+            all_ratings[np.argsort(ratings), self.items_id[it]] = np.arange(len(ratings))
 
         for u in self.user:
             recommend_items = np.argsort(-all_ratings[u])
