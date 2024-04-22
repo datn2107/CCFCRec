@@ -258,6 +258,7 @@ def train(model, train_loader, optimizer, validators, args):
                     torch.save(model.state_dict(), model_save_dir + "/best_model.pt")
                     np.save(model_save_dir + "/best_model_ratings.npy", ratings)
 
+            test_save_path = os.path.join(model_save_dir, name + "_result.csv")
             with open(test_save_path, "a+") as f:
                 f.write(
                     "{},{},{},{},{},{},{},{},{}\n".format(
@@ -274,7 +275,8 @@ def train(model, train_loader, optimizer, validators, args):
                 )
 
         # save model
-        torch.save(
-            model.state_dict(), model_save_dir + "/epoch_" + str(i_epoch) + ".pt"
-        )
+        if not args.save_best_only:
+            torch.save(
+                model.state_dict(), model_save_dir + "/epoch_" + str(i_epoch) + ".pt"
+            )
         print("")

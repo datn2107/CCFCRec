@@ -64,6 +64,12 @@ def get_args():
         default="users_validator_test_set",
         help="validators name to indicate the best model",
     )
+    parser.add_argument(
+        '--save_best_only',
+        type=bool,
+        default=False,
+        action='store_true',
+    )
     args = parser.parse_args()
     return args
 

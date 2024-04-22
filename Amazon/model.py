@@ -93,7 +93,7 @@ class CCFCRec(nn.Module):
         z_v_copy = z_v.repeat(batch_size, 1, 1)
         z_v_squeeze = z_v_copy.squeeze(dim=2).to(device)
         neg_inf = torch.full(z_v_squeeze.shape, -1e6).to(device)
-        z_v_mask = torch.where(attribute != -1, z_v_squeeze, neg_inf)   
+        z_v_mask = torch.where(attribute != -1, z_v_squeeze, neg_inf)
         attr_attention_weight = torch.softmax(z_v_mask, dim=1)
         final_attr_emb = torch.matmul(attr_attention_weight, self.attr_matrix)
 
@@ -258,6 +258,7 @@ def train(model, train_loader, optimizer, validators, args):
                     torch.save(model.state_dict(), model_save_dir + "/best_model.pt")
                     np.save(model_save_dir + "/best_model_ratings.npy", ratings)
 
+            test_save_path = os.path.join(model_save_dir, name + "_result.csv")
             with open(test_save_path, "a+") as f:
                 f.write(
                     "{},{},{},{},{},{},{},{},{}\n".format(
@@ -274,7 +275,8 @@ def train(model, train_loader, optimizer, validators, args):
                 )
 
         # save model
-        torch.save(
-            model.state_dict(), model_save_dir + "/epoch_" + str(i_epoch) + ".pt"
-        )
+        if not args.save_best_only:
+            torch.save(
+                model.state_dict(), model_save_dir + "/epoch_" + str(i_epoch) + ".pt"
+            )
         print("")
