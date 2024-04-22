@@ -31,7 +31,7 @@ if __name__ == "__main__":
     test_data = np.load(test_path)
 
     img_features = np.load(os.path.join(args.data_path, "v_features.npy")).astype(np.float32)
-    movies_onehot = np.load(os.path.join(args.data_path, "onehot_features.npy")).astype(np.int32)
+    onehot_features = np.load(os.path.join(args.data_path, "onehot_features.npy")).astype(np.int32)
     category_map = np.load(os.path.join(args.data_path, "categories_id.npy"), allow_pickle=True).item()
 
     args.attr_num = len(category_map)
@@ -40,7 +40,7 @@ if __name__ == "__main__":
     dataSet = RatingDataset(
         train_data,
         img_features,
-        movies_onehot,
+        onehot_features,
         len(category_map),
         metadata["n_users"],
         metadata["n_items"],
