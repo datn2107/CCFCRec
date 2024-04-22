@@ -64,24 +64,24 @@ if __name__ == "__main__":
         'items_validator_validation_set': ValidateItems(
             val_data,
             img_features,
-            movies_onehot
+            onehot_features
         ),
         'users_validator_validation_set': ValidateUsers(
             val_data,
             img_features,
-            movies_onehot,
+            onehot_features,
             metadata['n_users'],
             metadata['n_val_cold_items']
         ),
         'items_validator_test_set': ValidateItems(
             test_data,
             img_features,
-            movies_onehot
+            onehot_features
         ),
         'users_validator_test_set': ValidateUsers(
             test_data,
             img_features,
-            movies_onehot,
+            onehot_features,
             metadata['n_users'],
             metadata['n_test_cold_items']
         )

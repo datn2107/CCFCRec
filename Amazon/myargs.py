@@ -66,7 +66,6 @@ def get_args():
     )
     parser.add_argument(
         '--save_best_only',
-        type=bool,
         default=False,
         action='store_true',
     )
