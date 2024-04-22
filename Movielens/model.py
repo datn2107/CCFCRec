@@ -45,28 +45,12 @@ class CCFCRec(nn.Module):
         self.sigmoid = torch.nn.Sigmoid()
 
         # The embedding layer of user and item can be initialized with pre-trained ones.
-        if args.pretrain is True:
-            if args.pretrain_update is True:
-                self.user_embedding = nn.Parameter(
-                    torch.load("user_emb.pt"), requires_grad=True
-                )
-                self.item_embedding = nn.Parameter(
-                    torch.load("item_emb.pt"), requires_grad=True
-                )
-            else:
-                self.user_embedding = nn.Parameter(
-                    torch.load("user_emb.pt"), requires_grad=False
-                )
-                self.item_embedding = nn.Parameter(
-                    torch.load("item_emb.pt"), requires_grad=False
-                )
-        else:
-            self.user_embedding = nn.Parameter(
-                torch.FloatTensor(args.n_users, args.implicit_dim)
-            )
-            self.item_embedding = nn.Parameter(
-                torch.FloatTensor(args.n_items, args.implicit_dim)
-            )
+        self.user_embedding = nn.Parameter(
+            torch.FloatTensor(args.n_users, args.implicit_dim)
+        )
+        self.item_embedding = nn.Parameter(
+            torch.FloatTensor(args.n_items, args.implicit_dim)
+        )
 
         # Define the generation layer to jointly generate q_v_c from the information of (q_v_a, u),
         # and generate item embeddings containing collaborative information.
@@ -83,7 +67,7 @@ class CCFCRec(nn.Module):
 
         # Generate layer initialization
         # Initialization of user, item embedding layer, initialization without pre-training
-        if self.args.pretrain is False:
+        if self.args.pretrain is None:
             nn.init.xavier_normal_(self.user_embedding)
             nn.init.xavier_normal_(self.item_embedding)
         nn.init.xavier_normal_(self.gen_layer1.weight)
@@ -126,12 +110,18 @@ def train(model, train_loader, optimizer, validators, args):
 
     for name, validator in validators.items():
         test_save_path = os.path.join(model_save_dir, name + "_result.csv")
-        with open(test_save_path, "a+") as f:
-            f.write(
-                "loss,contrast_loss,self_contrast_loss,p@5,p@10,p@20,ndcg@5,ndcg@10,ndcg@20\n"
-            )
+        if not os.path.exists(test_save_path):
+            with open(test_save_path, "a+") as f:
+                f.write(
+                    "loss,contrast_loss,self_contrast_loss,p@5,p@10,p@20,ndcg@5,ndcg@10,ndcg@20\n"
+                )
 
     best_recall = 0
+    if args.pretrain is not None:
+        last_result_csv = pd.read_csv(os.path.join(model_save_dir, "users_validator_test_set_result.csv"), header=0)
+        best_recall = last_result_csv["p@10"].max()
+    print("Best Recall:", best_recall)
+
     for i_epoch in range(args.epoch):
         for (
             user,

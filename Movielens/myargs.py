@@ -41,13 +41,7 @@ def get_args():
     )
     parser.add_argument("--epoch", type=int, default=10, help="training epoch")
     parser.add_argument(
-        "--pretrain", type=bool, default=False, help="user/item embedding pre-training"
-    )
-    parser.add_argument(
-        "--pretrain-update",
-        type=bool,
-        default=False,
-        help="u/i pretrain embedding update",
+        "--pretrain", type=str, default=None, help="model pre-training weight"
     )
     parser.add_argument(
         "--contrast-flag", type=bool, default=True, help="contrast job flag"

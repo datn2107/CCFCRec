@@ -56,6 +56,8 @@ if __name__ == "__main__":
 
     args.n_users, args.n_items = metadata['n_users'], metadata['n_items']
     myModel = CCFCRec(args)
+    if args.pretrain is not None:
+        myModel.load_state_dict(torch.load(args.pretrain))
 
     optimizer = torch.optim.Adam(
         myModel.parameters(), lr=args.learning_rate, weight_decay=0.1
