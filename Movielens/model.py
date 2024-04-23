@@ -118,7 +118,7 @@ def train(model, train_loader, optimizer, validators, args):
 
     best_recall = 0
     if args.pretrain is not None:
-        last_result_csv = pd.read_csv(os.path.join(model_save_dir, "users_validator_test_set_result.csv"), header=0)
+        last_result_csv = pd.read_csv(os.path.join(model_save_dir, args.key_validators_name + "_result.csv"), header=0)
         best_recall = last_result_csv["p@10"].max()
     print("Best Recall:", best_recall)
 
