@@ -83,9 +83,24 @@ class ValidateItems:
 
             # Calculate hr indicator
             # Calculate p@k indicator
-            hr_hit_cnt_5 += hr_at_k(it, recommend_users, self.item_user_dict, 5) / min(5, n_groundtruth) if n_groundtruth > 0 else 1
-            hr_hit_cnt_10 += hr_at_k(it, recommend_users, self.item_user_dict, 10) / min(10, n_groundtruth) if n_groundtruth > 0 else 1
-            hr_hit_cnt_20 += hr_at_k(it, recommend_users, self.item_user_dict, 20) / min(20, n_groundtruth) if n_groundtruth > 0 else 1
+            hr_hit_cnt_5 += (
+                hr_at_k(it, recommend_users, self.item_user_dict, 5)
+                / min(5, n_groundtruth)
+                if n_groundtruth > 0
+                else 1
+            )
+            hr_hit_cnt_10 += (
+                hr_at_k(it, recommend_users, self.item_user_dict, 10)
+                / min(10, n_groundtruth)
+                if n_groundtruth > 0
+                else 1
+            )
+            hr_hit_cnt_20 += (
+                hr_at_k(it, recommend_users, self.item_user_dict, 20)
+                / min(20, n_groundtruth)
+                if n_groundtruth > 0
+                else 1
+            )
 
             # Calculate NDCG indicator
             ndcg_sum_5 += ndcg_k(it, recommend_users, self.item_user_dict, 5)
@@ -105,16 +120,13 @@ class ValidateItems:
 
 
 class ValidateUsers:
-    def __init__(self, val_data, img_features, onehot_features, n_users, n_items):
+    def __init__(self, val_data, val_items, img_features, onehot_features, n_users, n_items):
         print("validate class init")
         self.n_users, self.n_items = n_users, n_items
         self.user = set(val_data[:, 0])
         self.user_item_dict = {}
-        self.items_id = {}
+        self.items_id = {item_id: idx for idx, item_id in enumerate(val_items)}
         for data in val_data:
-            if data[1] not in self.items_id:
-                self.items_id[data[1]] = len(self.items_id)
-
             if data[0] not in self.user_item_dict:
                 self.user_item_dict[data[0]] = []
             self.user_item_dict[data[0]].append(self.items_id[data[1]])
@@ -141,8 +153,9 @@ class ValidateUsers:
                 _, ratings = predict(model, genre, img_feature, max_k)
 
             all_ratings[:, self.items_id[it]] = ratings
-            all_ranking[np.argsort(ratings), self.items_id[it]] = np.arange(len(ratings))
-
+            all_ranking[np.argsort(ratings), self.items_id[it]] = np.arange(
+                len(ratings)
+            )
 
         for u in self.user:
             recommend_items = np.argsort(-all_ranking[u])
@@ -150,9 +163,24 @@ class ValidateUsers:
 
             # Calculate hr indicator
             # Calculate p@k indicator
-            hr_hit_cnt_5 += hr_at_k(u, recommend_items, self.user_item_dict, 5) / min(5, n_groundtruth) if n_groundtruth > 0 else 1
-            hr_hit_cnt_10 += hr_at_k(u, recommend_items, self.user_item_dict, 10) / min(10, n_groundtruth) if n_groundtruth > 0 else 1
-            hr_hit_cnt_20 += hr_at_k(u, recommend_items, self.user_item_dict, 20) / min(20, n_groundtruth) if n_groundtruth > 0 else 1
+            hr_hit_cnt_5 += (
+                hr_at_k(u, recommend_items, self.user_item_dict, 5)
+                / min(5, n_groundtruth)
+                if n_groundtruth > 0
+                else 1
+            )
+            hr_hit_cnt_10 += (
+                hr_at_k(u, recommend_items, self.user_item_dict, 10)
+                / min(10, n_groundtruth)
+                if n_groundtruth > 0
+                else 1
+            )
+            hr_hit_cnt_20 += (
+                hr_at_k(u, recommend_items, self.user_item_dict, 20)
+                / min(20, n_groundtruth)
+                if n_groundtruth > 0
+                else 1
+            )
 
             # Calculate NDCG indicator
             ndcg_sum_5 += ndcg_k(u, recommend_items, self.user_item_dict, 5)

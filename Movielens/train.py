@@ -22,12 +22,16 @@ if __name__ == "__main__":
 
     train_path = os.path.join(args.data_path, "train_all_warm_interactions_negative_users.npy")
     val_path = os.path.join(args.data_path, "val_cold_interactions.npy")
+    val_cold_items_path = os.path.join(args.data_path, "val_cold_items.npy")
     test_path = os.path.join(args.data_path, "test_cold_interactions.npy")
+    test_cold_items_path = os.path.join(args.data_path, "test_cold_items.npy")
 
     # negative user id
     train_data = np.load(train_path)
     val_data = np.load(val_path)
+    val_cold_items = np.load(val_cold_items_path, allow_pickle=True).item()
     test_data = np.load(test_path)
+    test_cold_items = np.load(test_cold_items_path, allow_pickle=True).item()
 
     cold_items = np.load(os.path.join(args.data_path, "cold_items.npy"), allow_pickle=True).item()
     warm_items = np.load(os.path.join(args.data_path, "warm_items.npy"), allow_pickle=True).item()
@@ -71,6 +75,7 @@ if __name__ == "__main__":
         ),
         'users_validator_validation_set': ValidateUsers(
             val_data,
+            val_cold_items,
             img_features,
             movies_onehot,
             metadata['n_users'],
@@ -83,6 +88,7 @@ if __name__ == "__main__":
         ),
         'users_validator_test_set': ValidateUsers(
             test_data,
+            test_cold_items,
             img_features,
             movies_onehot,
             metadata['n_users'],

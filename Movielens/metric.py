@@ -115,16 +115,13 @@ class ValidateItems:
 
 
 class ValidateUsers:
-    def __init__(self, val_data, img_features, onehot_features, n_users, n_items):
+    def __init__(self, val_data, val_items, img_features, onehot_features, n_users, n_items):
         print("validate class init")
         self.n_users, self.n_items = n_users, n_items
         self.user = set(val_data[:, 0])
         self.user_item_dict = {}
-        self.items_id = {}
+        self.items_id = {item_id: idx for idx, item_id in enumerate(val_items)}
         for data in val_data:
-            if data[1] not in self.items_id:
-                self.items_id[data[1]] = len(self.items_id)
-
             if data[0] not in self.user_item_dict:
                 self.user_item_dict[data[0]] = []
             self.user_item_dict[data[0]].append(self.items_id[data[1]])
